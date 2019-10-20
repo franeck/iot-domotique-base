@@ -8,7 +8,7 @@ POST /event
   {
     "event": {
       "opening": Boolean,
-      "time": Long
+      "eventTime": Long
     }
   }
 ```
