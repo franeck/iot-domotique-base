@@ -8,8 +8,7 @@ POST /event
   {
     "event": {
       "sensorId": Int,
-      "opening": Boolean,
-      "eventTime": Long
+      "opening": Boolean
     }
   }
 ```
