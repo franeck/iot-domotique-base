@@ -7,6 +7,7 @@ POST /event
 ```json
   {
     "event": {
+      "sensorId": Int,
       "opening": Boolean,
       "eventTime": Long
     }
