@@ -9,8 +9,8 @@
 #include <ArduinoJson.h>
 
 /* ================================= Wifi ================================= */
-const char* ssid = "";  // Enter SSID here
-const char* password = "";  //Enter Password here
+const char* ssid = "iotbipbip";  // Enter SSID here
+const char* password = "esp2019iot";  //Enter Password here
 
 /* ================================= Web Server ================================= */
 
@@ -47,9 +47,12 @@ boolean alarmActive = false;
 boolean alarmArmed = false;
 int alarmNextCheck = 0;
 
+String alarmReason[2] = {"", ""};
+boolean alarmSource[2] = {false, false};
+
 /* ================================= Sensors ================================= */
 
-String sensorIP[3] = {"192.168.1.78", "192.168.1.78", "192.168.1.78"};
+String sensorIP[3] = {"192.168.43.121", "192.168.43.115", "192.168.43.77"};
 boolean sensorOpen[3] = {false, false, false};
 int sensorLostConnections[3] = {0, 0, 0};
 int sensorNextCheck = 0;
@@ -117,11 +120,15 @@ void handlePing() {
 }
 
 void handleEvent() {
-  Serial.println("New event arrived");
   DynamicJsonDocument doc(1024);
   deserializeJson(doc, server.arg("plain"));
   int sensorId = doc["event"]["sensorId"];  
   boolean opening = doc["event"]["opening"];
+  if(opening) {
+    Serial.println("New event, entrance "+String(sensorId)+" is now open");
+  } else {
+    Serial.println("New event, entrance "+String(sensorId)+" is now closed");
+  }
   server.send(200); 
   handleSensorEvent(sensorId, opening);
 }
@@ -246,15 +253,39 @@ boolean isHomeEmpty() {
 
 void checkAlarm(int checkDelay) {
   if(millis() > alarmNextCheck) {
-    if (isHomeEmpty()) {
-      alarmActive = true;
+    findoutAlarmActive();
+
+    if(alarmSource[0]) {
+      if(!alarmArmed) {
+        armTheAlarm(alarmReason[0]);
+      }
+    } else if (alarmSource[1]) {
+      if(!alarmArmed) {
+        armTheAlarm(alarmReason[1]);
+      }
     } else {
-      alarmActive = false;
-      if(alarmArmed && sensorsHealthy) {
+      if(alarmArmed) {
         disarmTheAlarm();
       }
     }
+
+
+
     alarmNextCheck = millis() + checkDelay;
+  }
+}
+
+
+
+void findoutAlarmActive() {
+  if (isHomeEmpty()) {
+    alarmActive = true;
+  } else {
+    alarmActive = false;
+    if(alarmArmed) {
+      alarmReason[1] = "";
+      alarmSource[1] = false;
+    }
   }
 }
 
@@ -270,6 +301,7 @@ void armTheAlarm(String reason) {
 void disarmTheAlarm() {
   // Call the server here
   alarmArmed = false;
+  clearTone();
   Serial.println("Nevermind, disarm the alarm");
 }
 
@@ -286,10 +318,12 @@ void checkSensors(int checkDelay) {
         sensorsHealthy = false;
       }
     }
-    if(!sensorsHealthy) {
-      armTheAlarm("Following sensors are offline: "+failedSensors);      
-    } else if (alarmArmed && !isHomeEmpty()){
-      disarmTheAlarm();
+    if(!sensorsHealthy ) {
+      alarmReason[0] = "Following sensors are offline: "+failedSensors;
+      alarmSource[0] = true;  
+    } else {
+      alarmReason[0] = "";
+      alarmSource[0] = false;  
     }
     sensorNextCheck = millis() + checkDelay;
   }
@@ -320,7 +354,8 @@ void getSensorsState() {
 
 void handleSensorEvent(int sensorId, boolean opening) {
   if(alarmActive && opening) {
-     armTheAlarm("Entrance "+String(sensorId)+" is open!");
+    alarmReason[1] = "Entrance "+String(sensorId)+" is open!";
+    alarmSource[1] = true;
   }
 }
 
