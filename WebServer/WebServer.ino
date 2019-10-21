@@ -118,12 +118,12 @@ String SendHTML(uint8_t event_stat,uint8_t state_stat){
    if(event_stat)
   {ptr +="<p>Event Status: ON</p><a class=\"button button-off\" href=\"/event\">OFF</a>\n";}
   else
-  {ptr +="<p>Event Status: OFF</p><a class=\"button button-on\" href=\"/event\">ON</a>\n";}
+  {ptr +="<p>Event Status: OFF</p><a class=\"button button-on\" href=\"/event_off\">ON</a>\n";}
 
   if(state_stat)
   {ptr +="<p>State Status: ON</p><a class=\"button button-off\" href=\"/state\">OFF</a>\n";}
   else
-  {ptr +="<p>State Status: OFF</p><a class=\"button button-on\" href=\"/state\">ON</a>\n";}
+  {ptr +="<p>State Status: OFF</p><a class=\"button button-on\" href=\"/state_off\">ON</a>\n";}
 
   ptr +="</body>\n";
   ptr +="</html>\n";
